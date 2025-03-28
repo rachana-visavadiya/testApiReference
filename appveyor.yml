@@ -1,0 +1,24 @@
+environment:
+  nodejs_version: "8"
+
+# Install scripts. (runs after repo cloning)
+install:
+  # Get the latest stable version of Node.js or io.js
+  - ps: Install-Product node ''
+  # install modules
+  - npm install
+
+# Post-install test scripts.
+test_script:
+  # Output useful info for debugging.
+  - node --version
+  - npm --version
+  # run tests
+  - npm test
+
+# Don't actually build.
+build: off
+deploy:
+  provider: Webhook
+  url: https://writing-demo.dev.rocket.chat/hooks/67e64612c81fc9317178ba2b/E7NrfcKxjtxM5XoWpoSLCnKZYeBAbjNZ9YtQDsoT6nxHSfDL
+  request_timeout: 5
