@@ -1,0 +1,44 @@
+name: Weekly PR Summary with DeepSeek
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'   # Every Monday at 9:00 UTC
+  workflow_dispatch:        # Allows manual trigger
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  summary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # needed to get PR info
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install PyGithub requests
+
+      - name: Generate PR summary with DeepSeek
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: python .github/scripts/deepseek_pr_summary.py
+
+      - name: Send to Rocket.Chat
+        env:
+          ROCKETCHAT_WEBHOOK: ${{ secrets.ROCKETCHAT_WEBHOOK }}
+        run: |
+          if [ -f pr_summary.md ]; then
+            curl -X POST -H 'Content-Type: application/json' \
+              -d "{\"text\": \"$(cat pr_summary.md | sed 's/"/\\"/g')\"}" \
+              $ROCKETCHAT_WEBHOOK
+          else
+            echo "No summary file generated."
+          fi
